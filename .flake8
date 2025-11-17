@@ -1,0 +1,34 @@
+[flake8]
+# Set maximum line length
+max-line-length = 88
+
+# Ignore some common warnings that are often acceptable
+ignore = 
+    # E203: whitespace before ':'
+    E203,
+    # W503: line break before binary operator (conflicts with W504)
+    W503
+
+# Exclude common directories that don't need linting
+exclude = 
+    .git,
+    __pycache__,
+    .venv,
+    venv,
+    .tox,
+    .eggs,
+    *.egg-info,
+    build,
+    dist
+
+# Set the complexity threshold
+max-complexity = 10
+
+# Show source code for each error
+show-source = True
+
+# Count the number of errors and warnings
+count = True
+
+# Show statistics for the most frequent errors
+statistics = True

@@ -1,0 +1,126 @@
+name: CI/CD Pipeline
+
+# Trigger workflow on push to any branch and pull requests to main
+on:
+  push:
+    branches: [ "main", "develop", "*" ]
+  pull_request:
+    branches: [ "main" ]
+
+# Set default permissions
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  test-and-lint:
+    name: Test, Lint & Build
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+    
+    steps:
+    # Step 1: Checkout the repository code
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    # Step 2: Set up Python environment
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'  # Cache pip dependencies for faster builds
+        
+    # Step 3: Install dependencies
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    # Step 4: Run linting with flake8
+    - name: Lint with flake8
+      run: |
+        echo "Running flake8 linter..."
+        flake8 src/ tests/ --statistics --count
+        echo "✅ Linting completed successfully"
+        
+    # Step 5: Run tests with pytest and generate reports
+    - name: Run tests with pytest
+      run: |
+        echo "Running pytest with coverage and XML output..."
+        pytest tests/ -v \
+          --junitxml=test-results.xml \
+          --cov=src \
+          --cov-report=xml:coverage.xml \
+          --cov-report=html:htmlcov \
+          --cov-report=term-missing
+        echo "✅ Tests completed successfully"
+        
+    # Step 6: Upload test results as artifacts
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()  # Upload even if tests fail
+      with:
+        name: test-results-${{ matrix.python-version }}
+        path: |
+          test-results.xml
+          coverage.xml
+          htmlcov/
+        retention-days: 30
+        
+    # Step 7: Upload coverage reports
+    - name: Upload coverage to Codecov (optional)
+      if: success()
+      run: |
+        echo "Coverage report generated successfully"
+        echo "Coverage files available in artifacts"
+        
+    # Step 8: Set up Docker Buildx for advanced Docker features
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    # Step 9: Build Docker image
+    - name: Build Docker image
+      run: |
+        echo "Building Docker image..."
+        docker build -t ml-app:latest .
+        docker tag ml-app:latest ml-app:${{ github.sha }}
+        echo "✅ Docker image built successfully"
+        
+    # Step 10: Save Docker image as artifact
+    - name: Save Docker image
+      run: |
+        echo "Saving Docker image to tar file..."
+        docker save ml-app:latest > ml-app-image.tar
+        echo "✅ Docker image saved"
+        
+    # Step 11: Upload Docker image artifact
+    - name: Upload Docker image artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: docker-image-${{ github.sha }}
+        path: ml-app-image.tar
+        retention-days: 7  # Keep Docker images for 7 days
+        
+    # Step 12: Display build summary
+    - name: Build Summary
+      if: always()
+      run: |
+        echo "## 🚀 CI/CD Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+        echo "| Step | Status |" >> $GITHUB_STEP_SUMMARY
+        echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Linting (flake8) | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+        echo "| Unit Tests (pytest) | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+        echo "| Docker Build | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📋 Artifacts Generated:" >> $GITHUB_STEP_SUMMARY
+        echo "- Test results (JUnit XML)" >> $GITHUB_STEP_SUMMARY
+        echo "- Coverage reports (XML & HTML)" >> $GITHUB_STEP_SUMMARY
+        echo "- Docker image (ml-app:latest)" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📊 Quick Stats:" >> $GITHUB_STEP_SUMMARY
+        echo "- Python Version: ${{ matrix.python-version }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Commit SHA: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Branch: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY

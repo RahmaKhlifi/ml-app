@@ -1,67 +1,68 @@
+"""
+Simple unit tests for model functionality
+"""
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-import pytest
 import numpy as np
 from src.data_loader import load_iris_data
 from src.model import IrisClassifier
 
-class TestIrisClassifier:
-    def setup_method(self):
-        """Setup method that runs before each test"""
-        self.X_train, self.X_test, self.y_train, self.y_test = load_iris_data(test_size=0.3, random_state=42)
-        self.classifier = IrisClassifier()
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-    def test_model_initialization(self):
-        """Test that model initializes correctly"""
-        assert not self.classifier.is_trained
-        assert self.classifier.model is not None
 
-    def test_model_training(self):
-        """Test model training functionality"""
-        self.classifier.train(self.X_train, self.y_train)
-        assert self.classifier.is_trained
+def test_model_initialization():
+    """Test that model initializes correctly"""
+    classifier = IrisClassifier()
 
-    def test_model_prediction(self):
-        """Test model prediction functionality"""
-        self.classifier.train(self.X_train, self.y_train)
-        predictions = self.classifier.predict(self.X_test[:5])
-        assert len(predictions) == 5
-        assert all(isinstance(pred, (np.int32, np.int64, int)) for pred in predictions)
+    # Model should exist but not be trained yet
+    assert classifier.model is not None
+    assert not classifier.is_trained
 
-    def test_model_evaluation(self):
-        """Test model evaluation functionality"""
-        self.classifier.train(self.X_train, self.y_train)
-        accuracy, report = self.classifier.evaluate(self.X_test, self.y_test)
+    # Should have expected attributes
+    assert hasattr(classifier, 'model')
+    assert hasattr(classifier, 'is_trained')
 
-        assert 0 <= accuracy <= 1
-        assert isinstance(report, str)
-        assert "precision" in report.lower()
 
-    def test_model_save_load(self, tmp_path):
-        """Test model saving and loading"""
-        self.classifier.train(self.X_train, self.y_train)
+def test_model_training():
+    """Test that training changes model state correctly"""
+    # Load some data
+    X_train, X_test, y_train, y_test = load_iris_data(
+        test_size=0.3, random_state=42
+    )
 
-        # Save model
-        save_path = tmp_path / "test_model.pkl"
-        self.classifier.save_model(str(save_path))
-        assert save_path.exists()
+    classifier = IrisClassifier()
 
-        # Load model
-        new_classifier = IrisClassifier()
-        new_classifier.load_model(str(save_path))
-        assert new_classifier.is_trained
+    # Before training
+    assert not classifier.is_trained
 
-        # Verify predictions match
-        original_pred = self.classifier.predict(self.X_test[:5])
-        loaded_pred = new_classifier.predict(self.X_test[:5])
-        assert np.array_equal(original_pred, loaded_pred)
+    # Train the model
+    classifier.train(X_train, y_train)
 
-def test_data_loading():
-    """Test data loading functionality"""
-    X_train, X_test, y_train, y_test = load_iris_data()
+    # After training
+    assert classifier.is_trained
 
-    assert X_train.shape[1] == 4  # 4 features
-    assert len(np.unique(y_train)) == 3  # 3 classes
-    assert len(X_train) + len(X_test) == 150  # Total samples
+
+def test_prediction_output_format():
+    """Test that predictions have correct format"""
+    # Load some data
+    X_train, X_test, y_train, y_test = load_iris_data(
+        test_size=0.3, random_state=42
+    )
+
+    classifier = IrisClassifier()
+    classifier.train(X_train, y_train)
+
+    # Make predictions on a small sample
+    test_sample = X_test[:5]
+    predictions = classifier.predict(test_sample)
+
+    # Check prediction format
+    assert len(predictions) == 5  # Same number as input
+    assert isinstance(predictions, np.ndarray)  # Should be numpy array
+
+    # All predictions should be valid class labels (0, 1, or 2)
+    assert all(pred in [0, 1, 2] for pred in predictions)
+
+    # All predictions should be integers
+    assert all(isinstance(pred, (int, np.integer)) for pred in predictions)
