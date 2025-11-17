@@ -5,10 +5,12 @@ import sys
 import os
 
 import numpy as np
+
+# Add project root to Python path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
 from src.data_loader import load_iris_data
 from src.model import IrisClassifier
-
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 
 def test_model_initialization():

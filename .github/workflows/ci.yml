@@ -48,8 +48,11 @@ jobs:
         
     # Step 5: Run tests with pytest and generate reports
     - name: Run tests with pytest
+      env:
+        PYTHONPATH: ${{ github.workspace }}
       run: |
         echo "Running pytest with coverage and XML output..."
+        echo "PYTHONPATH set to: $PYTHONPATH"
         pytest tests/ -v \
           --junitxml=test-results.xml \
           --cov=src \

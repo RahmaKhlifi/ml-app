@@ -5,9 +5,11 @@ import sys
 import os
 
 import numpy as np
-from src.data_loader import load_iris_data, get_feature_names, get_target_names
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+# Add project root to Python path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+from src.data_loader import load_iris_data, get_feature_names, get_target_names
 
 
 def test_load_iris_data_shape():
