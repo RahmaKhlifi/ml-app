@@ -4,11 +4,10 @@ Simple unit tests for model functionality
 import sys
 import os
 
-import numpy as np
-
 # Add project root to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
+import numpy as np
 from src.data_loader import load_iris_data
 from src.model import IrisClassifier
 

@@ -32,3 +32,8 @@ count = True
 
 # Show statistics for the most frequent errors
 statistics = True
+
+# Per-file ignores for specific cases
+per-file-ignores =
+    # Allow module level import after sys.path modification in tests
+    tests/*.py:E402
