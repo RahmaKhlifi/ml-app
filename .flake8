@@ -35,5 +35,6 @@ statistics = True
 
 # Per-file ignores for specific cases
 per-file-ignores =
-    # Allow module level import after sys.path modification in tests
+    # Allow module level import after sys.path modification in tests and Docker scripts
     tests/*.py:E402
+    docker_*.py:E402

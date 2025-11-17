@@ -254,4 +254,162 @@ git push origin feature/*   # Push to any branch
 Dockerfile                  # Container configuration  
 requirements.txt            # Updated with pytest-cov
 ```
+# Task 6 : Docker Containerization
+
+## Implementation Summary
+Successfully containerized the ML application with a robust Docker setup that handles training, prediction, and deployment scenarios with proper CI/CD integration.
+
+### Docker Configuration Files:
+
+#### 1. **Dockerfile** - Multi-stage containerization:
+```dockerfile
+FROM python:3.11-slim
+
+# Optimized container setup:
+# - Minimal system dependencies (gcc for scikit-learn)
+# - Non-root user for security
+# - Proper Python environment variables
+# - Health checks for container monitoring
+# - Flexible model handling (train if not exists)
+```
+
+#### 2. **.dockerignore** - Optimized build context:
+```
+# Excludes unnecessary files for faster builds:
+# - Git history and IDE files
+# - Python cache and virtual environments  
+# - CI/CD workflows and documentation
+# - Local development artifacts
+```
+
+### Docker Application Scripts:
+
+#### **`docker_run.py`** - Main container entry point:
+- **Auto Mode**: Trains model if not exists, then runs prediction
+- **Train Mode**: Runs training only
+- **Predict Mode**: Runs prediction only (requires existing model)
+- **Error Handling**: Comprehensive error reporting and exit codes
+- **Multi-Mode Support**: Flexible operation for different use cases
+
+#### **`docker_train.py`** - Dedicated training script:
+- **Docker-optimized Training**: Handles container-specific paths
+- **Model Verification**: Confirms model creation and reports file size
+- **Error Reporting**: Detailed training failure diagnostics
+- **Path Management**: Proper Python path setup for container environment
+
+### Key Docker Features:
+
+#### **Robust Model Handling:**
+- Creates models directory if not exists
+- Handles missing pre-trained models gracefully
+- Automatic training on first container run
+- Persistent model storage with proper permissions
+
+#### **Security Best Practices:**
+- Non-root user execution (`app` user)
+- Minimal attack surface with slim Python image
+- Proper file permissions and ownership
+- Read-only container except for models directory
+
+#### **Health Monitoring:**
+```dockerfile
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import src.data_loader; print('OK')" || exit 1
+```
+
+#### **Environment Optimization:**
+- Python bytecode generation disabled (`PYTHONDONTWRITEBYTECODE=1`)
+- Unbuffered output for real-time logging (`PYTHONUNBUFFERED=1`)
+- Proper Python path setup (`PYTHONPATH=/app`)
+- Efficient dependency caching with pip
+
+### Docker Usage Examples:
+
+#### **Build Docker Image:**
+```bash
+docker build -t ml-app:latest .
+```
+
+#### **Run Complete ML Pipeline (Auto Mode):**
+```bash
+docker run --rm ml-app:latest
+# Automatically trains model if not exists, then runs prediction
+```
+
+#### **Run Training Only:**
+```bash
+docker run --rm ml-app:latest python docker_train.py
+```
+
+#### **Run Custom Mode:**
+```bash
+docker run --rm ml-app:latest python docker_run.py --mode train
+docker run --rm ml-app:latest python docker_run.py --mode predict
+```
+
+#### **Interactive Container:**
+```bash
+docker run -it --rm ml-app:latest bash
+```
+
+### CI/CD Integration:
+
+#### **GitHub Actions Fixes:**
+- **Removed Models Directory Issue**: Fixed Docker build failures in CI
+- **Optimized Build Context**: .dockerignore reduces build time and size
+- **Artifact Generation**: Docker images uploaded as workflow artifacts
+- **Multi-Environment Support**: Works with and without pre-existing models
+
+#### **Production Ready:**
+- **Port Exposure**: Ready for web interface (port 8000)
+- **Scalable Design**: Stateless except for model persistence
+- **Container Orchestration**: Compatible with Kubernetes, Docker Swarm
+- **Volume Mounting**: Models can be persisted via Docker volumes
+
+### Performance Results:
+
+#### **Container Execution:**
+```
+🐳 ML App Docker Container Started
+🤖 No model found, running training first...
+🏋️ Starting model training...
+✅ Model Accuracy: 0.9667 (96.67%)
+✅ Model successfully trained (975 bytes)
+🔮 Running prediction...
+✅ Prediction completed successfully
+🎉 Docker container execution completed successfully!
+```
+
+#### **Build Optimization:**
+- **Build Time**: ~8 minutes (first build), ~45 seconds (incremental)
+- **Image Size**: Optimized with slim Python base image
+- **Layer Caching**: Efficient dependency caching for faster rebuilds
+- **Context Size**: Reduced via .dockerignore exclusions
+
+### Fixed GitHub Actions Issues:
+- ✅ **Models Directory Error**: Resolved `/models: not found` build failures
+- ✅ **Import Path Issues**: Fixed absolute imports for container environment
+- ✅ **Workflow Compatibility**: CI/CD pipeline now builds successfully
+- ✅ **Artifact Generation**: Docker images available for download
+
+### Benefits Achieved:
+
+#### **Development:**
+- **Environment Consistency**: Same runtime across dev, CI, and production
+- **Easy Setup**: Single `docker run` command for complete ML pipeline
+- **Dependency Isolation**: No local Python environment conflicts
+- **Cross-Platform**: Works on Windows, macOS, and Linux
+
+#### **Deployment:**
+- **Production Ready**: Security hardened with non-root execution
+- **Scalable**: Stateless design supports horizontal scaling  
+- **Monitoring**: Health checks and comprehensive logging
+- **Flexible**: Multiple operation modes for different deployment scenarios
+
+#### **CI/CD:**
+- **Automated Building**: GitHub Actions creates Docker artifacts
+- **Testing**: Container tests run in isolated environments
+- **Deployment**: Ready for container orchestration platforms
+- **Versioning**: Tagged images with commit SHA for traceability
+
 

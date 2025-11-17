@@ -3,8 +3,8 @@
 Prediction script for Iris classifier
 """
 
-from model import IrisClassifier
-from data_loader import get_target_names
+from src.model import IrisClassifier
+from src.data_loader import get_target_names
 
 
 def main():
