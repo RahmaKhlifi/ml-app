@@ -60,7 +60,7 @@ jobs:
         
     # Step 6: Upload test results as artifacts
     - name: Upload test results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()  # Upload even if tests fail
       with:
         name: test-results-${{ matrix.python-version }}
@@ -98,7 +98,7 @@ jobs:
         
     # Step 11: Upload Docker image artifact
     - name: Upload Docker image artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: docker-image-${{ github.sha }}
         path: ml-app-image.tar
